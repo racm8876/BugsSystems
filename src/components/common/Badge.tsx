@@ -15,6 +15,10 @@ const Badge: React.FC<BadgeProps> = ({ variant, value, className = '' }) => {
           case 'in-progress': return 'bg-purple-100 text-purple-800';
           case 'resolved': return 'bg-green-100 text-green-800';
           case 'closed': return 'bg-gray-100 text-gray-800';
+          case 'active': return 'bg-green-100 text-green-800';
+          case 'inactive': return 'bg-gray-100 text-gray-800';
+          case 'enabled': return 'bg-green-100 text-green-800';
+          case 'disabled': return 'bg-red-100 text-red-800';
           default: return 'bg-gray-100 text-gray-800';
         }
       case 'severity':

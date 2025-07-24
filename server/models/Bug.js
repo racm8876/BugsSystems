@@ -20,12 +20,18 @@ const bugSchema = new mongoose.Schema({
   reportedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: [true, 'Reporter is required']
   },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    default: null
+    default: null,
+    validate: {
+      validator: function(v) {
+        return v === null || mongoose.Types.ObjectId.isValid(v);
+      },
+      message: 'Invalid assignedTo user ID'
+    }
   },
   status: {
     type: String,

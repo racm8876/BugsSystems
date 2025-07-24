@@ -1,5 +1,6 @@
 const Bug = require('../models/Bug');
 const ActivityLog = require('../models/ActivityLog');
+const mongoose = require('mongoose');
 
 const logActivity = async (bugId, userId, action, details, oldValue = null, newValue = null) => {
   try {
@@ -199,13 +200,41 @@ const createBug = async (req, res) => {
       assignedTo: assignedTo || null,
       severity,
       priority,
-      tags: tags ? tags.split(',').map(t => t.trim()) : [],
+      tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
       stepsToReproduce,
       expectedBehavior,
       actualBehavior,
       environment
     });
+
+    const populatedBug = await Bug.findById(bug._id)
+      .populate('project', 'name')
+      .populate('reportedBy', 'name email')
+      .populate('assignedTo', 'name email');
+
+    // Log activity
+    await logActivity(
+      bug._id,
+      req.user.id,
+      'created',
+      `Bug "${title}" was created`
+    );
+
+    if (assignedTo) {
+      await logActivity(
+        bug._id,
+        req.user.id,
+        'assigned',
+        `Bug assigned to ${populatedBug.assignedTo?.name || 'Unknown User'}`
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      bug: populatedBug
+    });
   } catch (error) {
+    console.error('Create bug error:', error);
     res.status(400).json({ 
       success: false, 
       message: error.message 
@@ -251,12 +280,14 @@ const updateBug = async (req, res) => {
       if (updates.assignedTo) {
         const User = require('../models/User');
         const newAssignee = await User.findById(updates.assignedTo);
-        changes.push({
-          action: 'assigned',
-          details: `Bug assigned to ${newAssignee.name}`,
-          oldValue: currentBug.assignedTo?.name || 'Unassigned',
-          newValue: newAssignee.name
-        });
+        if (newAssignee) {
+          changes.push({
+            action: 'assigned',
+            details: `Bug assigned to ${newAssignee.name}`,
+            oldValue: currentBug.assignedTo?.name || 'Unassigned',
+            newValue: newAssignee.name
+          });
+        }
       } else {
         changes.push({
           action: 'unassigned',

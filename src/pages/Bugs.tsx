@@ -56,73 +56,45 @@ const Bugs = () => {
     }
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   try {
-  //         const response = await apiService.createBug({
-  //       title: formData.title.trim(),
-  //       description: formData.description.trim(),
-  //       project: formData.project,
-  //       assignedTo: formData.assignedTo || undefined,
-  //       severity: formData.severity,
-  //       priority: formData.priority,
-  //       tags: typeof formData.tags === 'string'
-  //         ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
-  //         : [],
-  //       reportedBy: user?.id, // Make sure you pass this too
-  //     });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
+    try {
+      const bugData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        project: formData.project,
+        assignedTo: formData.assignedTo || null,
+        severity: formData.severity,
+        priority: formData.priority,
+        tags: typeof formData.tags === 'string'
+          ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+          : [],
+      };
 
-  //     if (response.success) {
-  //       setBugs([response.bug, ...bugs]);
-  //       setFormData({
-  //         title: '',
-  //         description: '',
-  //         project: '',
-  //         assignedTo: '',
-  //         severity: 'medium',
-  //         priority: 'medium',
-  //         tags: '',
-  //       });
-  //       setShowCreateModal(false);
-  //       alert('Bug reported successfully!');
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to create bug:', error);
-  //     alert('Failed to create bug');
-  //   }
-  // };
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+      console.log('Creating bug with data:', bugData);
 
-  console.log('FormData:', formData);
+      const response = await apiService.createBug(bugData);
 
-  try {
-    const response = await apiService.createBug({
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      project: formData.project,
-      assignedTo: formData.assignedTo || undefined,
-      severity: formData.severity,
-      priority: formData.priority,
-      tags: typeof formData.tags === 'string'
-        ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
-        : [],
-      reportedBy: user?.id, // ✅ Required by backend
-    });
-
-    if (response.success) {
-      // reset form
-      setBugs([response.bug, ...bugs]);
-      setFormData({ title: '', description: '', project: '', assignedTo: '', severity: 'medium', priority: 'medium', tags: '' });
-      setShowCreateModal(false);
-      alert('Bug reported successfully!');
+      if (response.success) {
+        setBugs([response.bug, ...bugs]);
+        setFormData({ 
+          title: '', 
+          description: '', 
+          project: '', 
+          assignedTo: '', 
+          severity: 'medium', 
+          priority: 'medium', 
+          tags: '' 
+        });
+        setShowCreateModal(false);
+        alert('Bug reported successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to create bug:', error);
+      alert('Failed to create bug: ' + (error.message || 'Unknown error'));
     }
-  } catch (error) {
-    console.error('Failed to create bug:', error);
-    alert('Failed to create bug');
-  }
-};
+  };
 
   const filteredBugs = bugs.filter((bug: any) => {
     const matchesSearch = bug.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -265,6 +237,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                   {bug.assignedTo && (
                     <span>Assigned to: {getUserName(bug.assignedTo)}</span>
                   )}
+                  {!bug.assignedTo && (
+                    <span className="text-gray-400">Unassigned</span>
+                  )}
                   <span>Created: {formatDate(bug.createdAt)}</span>
                 </div>
 
@@ -372,8 +347,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Unassigned</option>
-                {users.filter((u: any) => u.role === 'developer' || u.role === 'admin').map((user: any) => (
-                  <option key={user._id} value={user._id}>{user.name}</option>
+                {users.filter((u: any) => u.role === 'developer' || u.role === 'admin').map((assignUser: any) => (
+                  <option key={assignUser._id} value={assignUser._id}>{assignUser.name}</option>
                 ))}
               </select>
             </div>

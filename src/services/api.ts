@@ -276,11 +276,19 @@ class ApiService {
   }
 
   async createBug(bugData: any) {
+    console.log('API Service - Creating bug with data:', bugData);
     const response = await fetch(`${this.baseURL}/bugs`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(bugData),
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+      console.error('API Error:', errorData);
+      throw new Error(errorData.message || 'Failed to create bug');
+    }
+    
     return this.handleResponse(response);
   }
 
